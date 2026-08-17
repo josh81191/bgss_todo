@@ -1,0 +1,8 @@
+BEGIN;
+
+ALTER TABLE bgss_todo.tasks
+    ADD COLUMN IF NOT EXISTS comment TEXT NOT NULL DEFAULT '';
+
+DROP TABLE IF EXISTS bgss_todo.task_seen;
+
+COMMIT;

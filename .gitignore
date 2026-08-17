@@ -1,0 +1,7 @@
+# Local environment secrets
+php/db_config.php
+php/db_config_dev.php
+js/firebase-config.js
+
+# Optional: keep only examples in source control
+!php/db_config_example.php
