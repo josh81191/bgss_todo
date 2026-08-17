@@ -1,6 +1,6 @@
 <?php
 session_start();
-require __DIR__ . '/data.php';
+require __DIR__ . '/../core/data.php';
 
 if (! isset($_SESSION['bgss_user'])) {
     jsonResponse(['success' => false, 'error' => 'Unauthorized'], 401);

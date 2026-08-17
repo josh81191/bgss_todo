@@ -6,7 +6,7 @@ A lightweight, role-aware task management dashboard built with PHP, PostgreSQL, 
 
 ### Authentication & roles
 
-- Session-based login (`php/login.php` / `php/logout.php`).
+- Session-based login (`php/api/login.php` / `php/api/logout.php`).
 - Two roles: `manager` and `staff`.
 - Managers have full control over every task, every project, and every user.
 - Staff ("non-managers") only see tasks assigned to them or created by them, from any project.
@@ -62,10 +62,10 @@ A lightweight, role-aware task management dashboard built with PHP, PostgreSQL, 
 4. Create the database configuration file from the example:
 
    ```text
-   php/db_config_example.php -> php/db_config.php
+   php/config/db_config_example.php -> php/config/db_config.php
    ```
 
-5. Edit `php/db_config.php` with your PostgreSQL connection details:
+5. Edit `php/config/db_config.php` with your PostgreSQL connection details:
 
    ```php
    return [
@@ -146,7 +146,7 @@ Migration history:
 
 ## API
 
-`php/tasks.php` is a session-authenticated JSON endpoint used by `js/app.js`.
+`php/api/tasks.php` is a session-authenticated JSON endpoint used by `js/app.js`.
 
 - `GET` — returns the current user's visible tasks, all users, and all projects.
 - `POST` with `action` in the request body:
@@ -163,8 +163,8 @@ Useful checks:
 ```powershell
 node --check js/app.js
 php -l dashboard.php
-php -l php/data.php
-php -l php/tasks.php
+php -l php/core/data.php
+php -l php/api/tasks.php
 ```
 
 The PHP checks require PHP to be available on the command line. When using XAMPP, PHP can also be run directly from the XAMPP installation directory.
@@ -174,16 +174,16 @@ The PHP checks require PHP to be available on the command line. When using XAMPP
 ```text
 dashboard.php                   Authenticated task dashboard
 index.php                       Login page
-style.css                       Dashboard styles
-style_login.css                 Login styles
+assets/css/style.css            Dashboard styles
+assets/css/style_login.css      Login styles
 js/app.js                       Task loading, rendering, filters, and interactions
 js/firebase-config.example.js   Firebase web config template
-php/data.php                    User, project, and task data access
-php/tasks.php                   Task API endpoint (list + all task actions)
-php/login.php                   Login endpoint
-php/logout.php                  Logout endpoint
-php/db.php                      PDO connection helper
-php/db_config_example.php       Database configuration template
+php/core/data.php               User, project, and task data access
+php/core/db.php                 PDO connection helper
+php/api/tasks.php               Task API endpoint (list + all task actions)
+php/api/login.php               Login endpoint
+php/api/logout.php              Logout endpoint
+php/config/db_config_example.php Database configuration template
 db/migrations/                  Ordered database migrations
 db/seed/                        Development/demo seed data
 assets/images/                  Images and branding assets
@@ -191,7 +191,7 @@ assets/images/                  Images and branding assets
 
 ## Security Notes
 
-- Do not commit `php/db_config.php`, `js/firebase-config.js`, or any real credentials.
+- Do not commit `php/config/db_config.php`, `js/firebase-config.js`, or any real credentials.
 - Passwords are stored in plaintext in this schema; this is intended for a small trusted internal tool, not a public deployment. Use strong, non-reused passwords, and restrict access at the network/Apache level if exposed beyond localhost.
-- All permission checks (view, edit, reassign, complete, delete) are enforced in `php/tasks.php`, not just in the UI. Do not rely on hiding a button as the only safeguard when adding new features.
+- All permission checks (view, edit, reassign, complete, delete) are enforced in `php/api/tasks.php`, not just in the UI. Do not rely on hiding a button as the only safeguard when adding new features.
 - Review session, database, and Apache configuration before deploying publicly.

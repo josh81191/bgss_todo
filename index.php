@@ -6,7 +6,7 @@
   <meta name="viewport"
     content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>BGSS Todo</title>
-  <link rel="stylesheet" href="style_login.css?<?php echo time(); ?>" />
+  <link rel="stylesheet" href="assets/css/style_login.css?<?php echo time(); ?>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -79,7 +79,7 @@
     }, 4000);
 
     try {
-      const response = await fetch('php/login.php', {
+      const response = await fetch('php/api/login.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

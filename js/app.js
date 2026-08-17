@@ -461,7 +461,7 @@ async function loadTaskData(scrollToTop = false) {
   }, 4000);
 
   try {
-    const response = await fetch("php/tasks.php");
+    const response = await fetch("php/api/tasks.php");
     const result = await response.json();
 
     if (!result.success) {
@@ -507,7 +507,7 @@ async function sendTaskAction(payload, triggerEl) {
   }, 4000);
 
   try {
-    const response = await fetch("php/tasks.php", {
+    const response = await fetch("php/api/tasks.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -742,7 +742,7 @@ async function compressImageToTarget(file, maxBytes = 150 * 1024) {
 }
 
 async function persistTaskPhoto(photoUrl, photoPath) {
-  const response = await fetch("php/tasks.php", {
+  const response = await fetch("php/api/tasks.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -823,7 +823,7 @@ async function saveDetailComment() {
   if (!task) return;
 
   try {
-    const response = await fetch("php/tasks.php", {
+    const response = await fetch("php/api/tasks.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

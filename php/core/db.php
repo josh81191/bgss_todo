@@ -4,8 +4,8 @@ function bgss_db_config()
 {
     // use db_config_dev.php for development environment, db_config.php for production
 
-    // $configFile = __DIR__ . '/db_config.php';
-    $configFile = __DIR__ . '/db_config_dev.php';
+    // $configFile = __DIR__ . '/../config/db_config.php';
+    $configFile = __DIR__ . '/../config/db_config_dev.php';
 
     if (file_exists($configFile)) {
         $config = require $configFile;

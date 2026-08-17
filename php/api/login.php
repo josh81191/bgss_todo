@@ -1,6 +1,6 @@
 <?php
 session_start();
-require __DIR__ . '/data.php';
+require __DIR__ . '/../core/data.php';
 
 $rawInput = file_get_contents('php://input');
 $data     = json_decode($rawInput, true);
