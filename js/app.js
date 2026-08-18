@@ -7,6 +7,7 @@ const state = {
   taskView: "active",
   projectFilter: "",
   assigneeFilter: "",
+  personalTaskFilter: "assigned",
 };
 
 const taskList = document.getElementById("taskList");
@@ -56,6 +57,9 @@ const projectFilterSelector = document.getElementById("projectFilterSelector");
 const projectFilterSelectorInitial = projectFilterSelector?.value;
 const assigneeFilterSelector = document.getElementById(
   "assigneeFilterSelector",
+);
+const personalTaskFilterSelector = document.getElementById(
+  "personalTaskFilterSelector",
 );
 
 if (projectFilterSelectorInitial) {
@@ -126,7 +130,16 @@ function renderTaskSummary() {
       state.currentUser?.role === "manager" && state.assigneeFilter
         ? task.assigned_to?.[0] === state.assigneeFilter
         : true,
-    );
+    )
+    .filter((task) => {
+      if (state.currentUser?.role === "manager") return true;
+      return state.personalTaskFilter === "created"
+        ? String(task.created_by) === String(state.currentUser?.id)
+        : task.assigned_to?.some(
+            (assignedId) =>
+              String(assignedId) === String(state.currentUser?.id),
+          );
+    });
 
   const total = visibleTasks.length;
   const urgent = visibleTasks.filter(
@@ -156,7 +169,16 @@ function renderTasks() {
       state.currentUser?.role === "manager" && state.assigneeFilter
         ? task.assigned_to?.[0] === state.assigneeFilter
         : true,
-    );
+    )
+    .filter((task) => {
+      if (state.currentUser?.role === "manager") return true;
+      return state.personalTaskFilter === "created"
+        ? String(task.created_by) === String(state.currentUser?.id)
+        : task.assigned_to?.some(
+            (assignedId) =>
+              String(assignedId) === String(state.currentUser?.id),
+          );
+    });
 
   const sortedTasks = visibleTasks.sort((a, b) => {
     if (a.priority === "urgent" && b.priority !== "urgent") return -1;
@@ -165,6 +187,11 @@ function renderTasks() {
   });
 
   const isManager = state.currentUser?.role === "manager";
+  const isAssignedTasksView =
+    !isManager && state.personalTaskFilter === "assigned";
+  const canCreateInlineTask = isManager || !isAssignedTasksView;
+
+  createTaskBtn?.classList.toggle("hidden", !canCreateInlineTask);
 
   const peopleOptions = (assignedId) =>
     state.users
@@ -185,7 +212,8 @@ function renderTasks() {
             const creatorId = String(task.created_by || "");
             const creator = getUserById(creatorId);
             const isCreator = creatorId === String(state.currentUser?.id || "");
-            const canEditTask = (isManager || isCreator) && !readOnlyTask;
+            const canEditTask =
+              (isManager || isCreator) && !readOnlyTask && !isAssignedTasksView;
             const createdByLabel =
               creatorId && creatorId !== String(state.currentUser?.id || "")
                 ? `<div class="task-created-by">Entry by: ${escapeHtml(creator?.name || creatorId)}</div>`
@@ -209,19 +237,29 @@ function renderTasks() {
                   ${createdByLabel}
                 </td>
 
-                <td>
-                  <select
-                    class="assigned-select table-select"
-                    data-task-id="${task.id}"
-                    ${canEditTask ? "" : "disabled"}
-                    aria-label="Assign task"
-                  >
-                    ${peopleOptions(assignedId)}
-                  </select>
-                </td>
+                ${
+                  isAssignedTasksView
+                    ? ""
+                    : `
+                  <td>
+                    <select
+                      class="assigned-select table-select"
+                      data-task-id="${task.id}"
+                      ${canEditTask ? "" : "disabled"}
+                      aria-label="Assign task"
+                    >
+                      ${peopleOptions(assignedId)}
+                    </select>
+                  </td>
+                `
+                }
 
                 <td class="action-cell">
                   <span class="table-actions">
+                    ${
+                      isAssignedTasksView
+                        ? ""
+                        : `
                     <button
                       type="button"
                       class="priority-button ${task.priority}"
@@ -236,8 +274,10 @@ function renderTasks() {
                       <option value="normal" ${task.priority === "normal" ? "selected" : ""}>Normal</option>
                       <option value="urgent" ${task.priority === "urgent" ? "selected" : ""}>Urgent</option>
                     </select>
+                    `
+                    }
                     ${
-                      readOnlyTask
+                      readOnlyTask || isAssignedTasksView
                         ? ""
                         : `
                           <span class="deadline-picker">
@@ -269,7 +309,7 @@ function renderTasks() {
           .join("")}
 
         ${
-          state.taskView === "completed"
+          state.taskView === "completed" || !canCreateInlineTask
             ? ""
             : `
           <tr class="new-task-row">
@@ -940,6 +980,11 @@ projectFilterSelector?.addEventListener("change", (event) => {
 
 assigneeFilterSelector?.addEventListener("change", (event) => {
   state.assigneeFilter = event.target.value;
+  renderTasks();
+});
+
+personalTaskFilterSelector?.addEventListener("change", (event) => {
+  state.personalTaskFilter = event.target.value;
   renderTasks();
 });
 

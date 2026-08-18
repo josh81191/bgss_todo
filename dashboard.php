@@ -79,6 +79,13 @@
           <option value="completed">Completed Tasks</option>
         </select>
         <?php endif; ?>
+        <?php if ($user['role'] !== 'manager'): ?>
+        <select id="personalTaskFilterSelector"
+          style="min-width: 140px; border: 1px solid var(--border); border-radius: 8px; background: white; padding: 6px 8px; color: var(--text); font-size: 0.75rem;">
+          <option value="assigned" selected>Assigned to me</option>
+          <option value="created">Task created by me</option>
+        </select>
+        <?php endif; ?>
       </div>
       <?php if ($user['role'] === 'manager'): ?>
       <div style="display: flex;">
