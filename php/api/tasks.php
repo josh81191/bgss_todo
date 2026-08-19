@@ -144,7 +144,7 @@ if ($action === 'toggle_complete') {
         jsonResponse(['success' => false, 'error' => 'You are not allowed to update this task.'], 403);
     }
 
-    $update = $pdo->prepare('UPDATE bgss_todo.tasks SET completed = NOT completed WHERE id = :task_id');
+    $update = $pdo->prepare('UPDATE bgss_todo.tasks SET completed = NOT completed, completed_at = CASE WHEN completed THEN NULL ELSE NOW() END WHERE id = :task_id');
     $update->execute([':task_id' => $taskId]);
     jsonResponse(['success' => true, 'tasks' => bgss_visible_tasks($currentUser)]);
 }

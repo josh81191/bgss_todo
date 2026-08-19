@@ -181,6 +181,13 @@ function renderTasks() {
     });
 
   const sortedTasks = visibleTasks.sort((a, b) => {
+    if (state.taskView === "completed") {
+      return (
+        new Date(b.completed_at || b.created_at || 0) -
+        new Date(a.completed_at || a.created_at || 0)
+      );
+    }
+
     if (a.priority === "urgent" && b.priority !== "urgent") return -1;
     if (a.priority !== "urgent" && b.priority === "urgent") return 1;
     return new Date(a.created_at || 0) - new Date(b.created_at || 0);

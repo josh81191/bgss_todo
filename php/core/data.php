@@ -132,18 +132,19 @@ function findUserByCredentials($username, $password)
 function bgss_normalize_task($row)
 {
     return [
-        'id'          => (string) ($row['id'] ?? ''),
-        'description' => (string) ($row['description'] ?? ''),
-        'comment'     => (string) ($row['comment'] ?? ''),
-        'photo_url'   => (string) ($row['photo_url'] ?? ''),
-        'photo_path'  => (string) ($row['photo_path'] ?? ''),
-        'priority'    => (string) ($row['priority'] ?? 'normal'),
-        'deadline'    => $row['deadline'] ? (string) $row['deadline'] : '',
-        'completed'   => (bool) ($row['completed'] ?? false),
-        'created_by'  => (string) ($row['created_by'] ?? ''),
-        'assigned_to' => ($row['assigned_to'] ?? null) !== null ? [(string) $row['assigned_to']] : [],
-        'project_id'  => (string) ($row['project_id'] ?? ''),
-        'created_at'  => (string) ($row['created_at'] ?? ''),
+        'id'           => (string) ($row['id'] ?? ''),
+        'description'  => (string) ($row['description'] ?? ''),
+        'comment'      => (string) ($row['comment'] ?? ''),
+        'photo_url'    => (string) ($row['photo_url'] ?? ''),
+        'photo_path'   => (string) ($row['photo_path'] ?? ''),
+        'priority'     => (string) ($row['priority'] ?? 'normal'),
+        'deadline'     => $row['deadline'] ? (string) $row['deadline'] : '',
+        'completed'    => (bool) ($row['completed'] ?? false),
+        'completed_at' => ($row['completed_at'] ?? null) ? (string) $row['completed_at'] : '',
+        'created_by'   => (string) ($row['created_by'] ?? ''),
+        'assigned_to'  => ($row['assigned_to'] ?? null) !== null ? [(string) $row['assigned_to']] : [],
+        'project_id'   => (string) ($row['project_id'] ?? ''),
+        'created_at'   => (string) ($row['created_at'] ?? ''),
     ];
 }
 
@@ -154,7 +155,7 @@ function getTasks()
         return [];
     }
 
-    $stmt = $pdo->query('SELECT id, description, comment, photo_url, photo_path, priority, deadline, completed, created_by, assigned_to, project_id, created_at FROM ' . $GLOBALS['schema'] . '.tasks ORDER BY completed ASC, CASE WHEN priority = \'urgent\' THEN 0 ELSE 1 END, created_at DESC');
+    $stmt = $pdo->query('SELECT id, description, comment, photo_url, photo_path, priority, deadline, completed, completed_at, created_by, assigned_to, project_id, created_at FROM ' . $GLOBALS['schema'] . '.tasks ORDER BY completed ASC, CASE WHEN completed THEN completed_at END DESC NULLS LAST, CASE WHEN NOT completed AND priority = \'urgent\' THEN 0 ELSE 1 END, created_at DESC');
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     return array_map('bgss_normalize_task', $rows);
@@ -167,7 +168,7 @@ function getTaskById($taskId)
         return null;
     }
 
-    $stmt = $pdo->prepare('SELECT id, description, comment, photo_url, photo_path, priority, deadline, completed, created_by, assigned_to, project_id, created_at FROM ' . $GLOBALS['schema'] . '.tasks WHERE id = :id LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id, description, comment, photo_url, photo_path, priority, deadline, completed, completed_at, created_by, assigned_to, project_id, created_at FROM ' . $GLOBALS['schema'] . '.tasks WHERE id = :id LIMIT 1');
     $stmt->execute([':id' => $taskId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
