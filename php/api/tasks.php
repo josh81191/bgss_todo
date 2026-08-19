@@ -207,8 +207,8 @@ if ($action === 'update_assigned') {
 
     $assigned = array_values(array_unique(array_filter(array_map('trim', (array) ($data['assigned_to'] ?? [])))));
 
-    $assignedTo = $assigned[0] ?? null;
-    if ($assignedTo === null || ! userById($assignedTo)) {
+    $assignedTo = $currentUser['role'] === 'manager' ? ($assigned[0] ?? null) : null;
+    if ($assignedTo !== null && ! userById($assignedTo)) {
         jsonResponse(['success' => false, 'error' => 'A valid assignee is required.'], 400);
     }
     $update = $pdo->prepare('UPDATE bgss_todo.tasks SET assigned_to = :assigned_to WHERE id = :task_id');
@@ -228,8 +228,8 @@ if ($action === 'create_task') {
         jsonResponse(['success' => false, 'error' => 'Description is required.'], 400);
     }
 
-    $assignedTo = $assigned[0] ?? $currentUser['id'];
-    if (! userById($assignedTo)) {
+    $assignedTo = $currentUser['role'] === 'manager' ? ($assigned[0] ?? null) : null;
+    if ($assignedTo !== null && ! userById($assignedTo)) {
         jsonResponse(['success' => false, 'error' => 'A valid assignee is required.'], 400);
     }
 

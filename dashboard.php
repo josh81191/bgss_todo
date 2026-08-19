@@ -120,9 +120,11 @@
             <textarea id="taskComment" name="comment" rows="3"></textarea>
           </label>
 
+          <?php if ($user['role'] === 'manager'): ?>
           <label class="field full">
-            <select id="taskAssignTo" name="assigned_to" required></select>
+            <select id="taskAssignTo" name="assigned_to"></select>
           </label>
+          <?php endif; ?>
 
           <label class="field">
             <select id="taskPriority" name="priority">
@@ -158,14 +160,18 @@
           aria-label="Close details">&times;</button>
       </div>
       <dl class="task-details-list">
+        <?php if ($user['role'] === 'manager'): ?>
         <dt>Assigned to</dt>
         <dd id="taskDetailsAssignedTo"></dd>
+        <?php endif; ?>
         <dt>Urgency</dt>
         <dd id="taskDetailsPriority"></dd>
+        <?php if ($user['role'] === 'manager'): ?>
         <dt>Created by</dt>
         <dd id="taskDetailsCreatedBy"></dd>
         <dt>Created on</dt>
         <dd id="taskDetailsCreatedOn"></dd>
+        <?php endif; ?>
         <dt>Deadline</dt>
         <dd id="taskDetailsDeadline"></dd>
         <dt>Comment</dt>

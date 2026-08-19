@@ -194,12 +194,13 @@ function renderTasks() {
   createTaskBtn?.classList.toggle("hidden", !canCreateInlineTask);
 
   const peopleOptions = (assignedId) =>
-    state.users
-      .map(
+    [
+      `<option value="" ${assignedId ? "" : "selected"}>----</option>`,
+      ...state.users.map(
         (user) =>
           `<option value="${escapeHtml(user.id)}" ${user.id === assignedId ? "selected" : ""}>${escapeHtml(user.name)}</option>`,
-      )
-      .join("");
+      ),
+    ].join("");
 
   taskList.innerHTML = `
   <div class="task-table-wrap">
@@ -238,7 +239,7 @@ function renderTasks() {
                 </td>
 
                 ${
-                  isAssignedTasksView
+                  !isManager
                     ? ""
                     : `
                   <td>
@@ -322,14 +323,15 @@ function renderTasks() {
               >
             </td>
 
-            <td>
-              <select
-                id="inlineAssignee"
-                class="assigned-select table-select"
-              >
+            ${
+              isManager
+                ? `<td>
+              <select id="inlineAssignee" class="assigned-select table-select">
                 ${peopleOptions("")}
               </select>
-            </td>
+            </td>`
+                : ""
+            }
 
             <td class="action-cell">
               <span class="table-actions">
@@ -378,21 +380,11 @@ function renderTasks() {
   const inlineAssignee = document.getElementById("inlineAssignee");
   const inlineDeadline = document.getElementById("inlineDeadline");
   if (state.taskView === "active") {
-    if (state.currentUser?.id && inlineAssignee) {
-      inlineAssignee.value = state.currentUser.id;
-    }
-
     let isAddingInlineTask = false;
 
     const addInlineTask = async () => {
       const description = inlineTask.value.trim();
       if (!description || isAddingInlineTask) return;
-
-      if (!inlineAssignee.value) {
-        window.alert("Please assign this task to a person first.");
-        inlineAssignee.focus();
-        return;
-      }
 
       isAddingInlineTask = true;
       await sendTaskAction(
@@ -402,7 +394,7 @@ function renderTasks() {
           comment: "",
           priority: "normal",
           deadline: inlineDeadline.value,
-          assigned_to: inlineAssignee.value ? [inlineAssignee.value] : [],
+          assigned_to: inlineAssignee?.value ? [inlineAssignee.value] : [],
           project_id: currentTaskProjectId(),
         },
         inlineTask,
@@ -634,8 +626,11 @@ function openTaskDetails(task) {
 
   document.getElementById("taskDetailsTitle").textContent = task.description;
 
-  document.getElementById("taskDetailsAssignedTo").textContent =
-    getUserById(task.assigned_to?.[0])?.name || "Unassigned";
+  const assignedToElement = document.getElementById("taskDetailsAssignedTo");
+  if (assignedToElement) {
+    assignedToElement.textContent =
+      getUserById(task.assigned_to?.[0])?.name || "Unassigned";
+  }
 
   const priorityElement = document.getElementById("taskDetailsPriority");
 
@@ -646,13 +641,16 @@ function openTaskDetails(task) {
 
   priorityElement.classList.toggle("normal", task.priority !== "urgent");
 
-  document.getElementById("taskDetailsCreatedBy").textContent =
-    getUserById(task.created_by)?.name || "Unknown";
+  const createdByElement = document.getElementById("taskDetailsCreatedBy");
+  if (createdByElement) {
+    createdByElement.textContent =
+      getUserById(task.created_by)?.name || "Unknown";
+  }
 
-  document.getElementById("taskDetailsCreatedOn").textContent = formatDateOnly(
-    task.created_at,
-    "Unknown",
-  );
+  const createdOnElement = document.getElementById("taskDetailsCreatedOn");
+  if (createdOnElement) {
+    createdOnElement.textContent = formatDateOnly(task.created_at, "Unknown");
+  }
 
   const deadlineElement = document.getElementById("taskDetailsDeadline");
   deadlineElement.textContent = formatDateOnly(task.deadline, "No deadline");
@@ -999,16 +997,10 @@ taskForm?.addEventListener("submit", async (event) => {
   const deadline = deadlineDate
     ? `${deadlineDate}${deadlineTime ? `T${deadlineTime}` : ""}`
     : "";
-  const assignedTo = document.getElementById("taskAssignTo").value;
+  const assignedTo = taskAssignTo?.value || "";
 
   if (!description) {
     alert("Please provide a description.");
-    return;
-  }
-
-  if (!assignedTo) {
-    alert("Please assign this task to a person first.");
-    document.getElementById("taskAssignTo").focus();
     return;
   }
 

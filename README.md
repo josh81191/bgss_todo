@@ -1,4 +1,4 @@
-# Todo System - Tailored for BGSS (Buannel Geo Solutions & Services)
+# A simple Todo System
 
 A lightweight, role-aware task management dashboard built with PHP, PostgreSQL, vanilla JavaScript, and CSS. Tasks are organized by project, assigned to a single person, and can carry a comment, a photo attachment, a deadline, and a priority.
 
