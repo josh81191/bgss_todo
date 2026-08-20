@@ -659,6 +659,19 @@ function openTaskDetails(task) {
     createdOnElement.textContent = formatDateOnly(task.created_at, "Unknown");
   }
 
+  const completedOnLabel = document.getElementById(
+    "taskDetailsCompletedOnLabel",
+  );
+  const completedOnElement = document.getElementById("taskDetailsCompletedOn");
+  if (completedOnLabel && completedOnElement) {
+    const hasCompletedAt = Boolean(task.completed && task.completed_at);
+    completedOnLabel.classList.toggle("hidden", !hasCompletedAt);
+    completedOnElement.classList.toggle("hidden", !hasCompletedAt);
+    completedOnElement.textContent = hasCompletedAt
+      ? formatDateOnly(task.completed_at, "Unknown")
+      : "";
+  }
+
   const deadlineElement = document.getElementById("taskDetailsDeadline");
   deadlineElement.textContent = formatDateOnly(task.deadline, "No deadline");
   deadlineElement.classList.toggle("has-deadline", Boolean(task.deadline));

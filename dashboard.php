@@ -171,6 +171,8 @@
         <dd id="taskDetailsCreatedBy"></dd>
         <dt>Created on</dt>
         <dd id="taskDetailsCreatedOn"></dd>
+        <dt id="taskDetailsCompletedOnLabel" class="hidden">Completed on</dt>
+        <dd id="taskDetailsCompletedOn" class="hidden"></dd>
         <?php endif; ?>
         <dt>Deadline</dt>
         <dd id="taskDetailsDeadline"></dd>
