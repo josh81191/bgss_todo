@@ -435,7 +435,7 @@ function renderTasks() {
       await sendTaskAction(
         {
           action: "create_task",
-          description,
+          description: await ensureEnglishText(description),
           comment: "",
           priority: "normal",
           deadline: inlineDeadline.value,
@@ -931,13 +931,16 @@ async function saveDetailComment() {
   if (!task) return;
 
   try {
+    const comment = await ensureEnglishText(
+      taskDetailsComment.value.slice(0, 200),
+    );
     const response = await fetch("php/api/tasks.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "update_comment",
         task_id: task.id,
-        comment: taskDetailsComment.value.slice(0, 200),
+        comment,
       }),
     });
     const result = await response.json();
@@ -1079,8 +1082,8 @@ taskForm?.addEventListener("submit", async (event) => {
   await sendTaskAction(
     {
       action: "create_task",
-      description,
-      comment,
+      description: await ensureEnglishText(description),
+      comment: await ensureEnglishText(comment),
       priority,
       deadline,
       assigned_to: assignedTo ? [assignedTo] : [],
@@ -1134,18 +1137,16 @@ taskList?.addEventListener(
     const task = state.tasks.find((item) => item.id === row.dataset.taskId);
     if (!task || task[field.dataset.field] === field.textContent.trim()) return;
 
+    const editedText = await ensureEnglishText(field.textContent.trim());
+
     await sendTaskAction(
       {
         action: "update_task",
         task_id: row.dataset.taskId,
         description:
-          field.dataset.field === "description"
-            ? field.textContent.trim()
-            : task.description,
+          field.dataset.field === "description" ? editedText : task.description,
         comment:
-          field.dataset.field === "comment"
-            ? field.textContent.trim()
-            : task.comment || "",
+          field.dataset.field === "comment" ? editedText : task.comment || "",
       },
       field,
     );

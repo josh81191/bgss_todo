@@ -118,3 +118,34 @@ async function translateDynamicText(text) {
     return text;
   }
 }
+
+const BANGLA_SCRIPT_REGEX = /[\u0980-\u09FF]/;
+
+function containsBanglaScript(text) {
+  return BANGLA_SCRIPT_REGEX.test(text || "");
+}
+
+// The DB must only ever store English. If the user typed with a Bangla
+// keyboard (e.g. mobile), translate it back to English before saving.
+async function ensureEnglishText(text) {
+  if (!text || !containsBanglaScript(text)) return text;
+
+  const cacheKey = `en:${text}`;
+  if (dynamicTranslationCache.has(cacheKey)) {
+    return dynamicTranslationCache.get(cacheKey);
+  }
+
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=bn&tl=en&dt=t&q=${encodeURIComponent(text)}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Reverse translation request failed");
+    const data = await response.json();
+    const translated = (data[0] || []).map((chunk) => chunk[0]).join("");
+    const result = translated || text;
+    dynamicTranslationCache.set(cacheKey, result);
+    return result;
+  } catch (error) {
+    console.error("Reverse translation failed:", error);
+    return text;
+  }
+}
