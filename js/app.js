@@ -272,7 +272,7 @@ function renderTasks() {
                 <td>
                   <div
                     class="table-editable task-name"
-                    contenteditable="${canEditTask && getCurrentLang() === "en"}"
+                    contenteditable="${canEditTask}"
                     data-field="description"
                     data-original="${escapeHtml(task.description)}"
                   >
@@ -1125,11 +1125,16 @@ taskList?.addEventListener("click", async (event) => {
   }
 });
 
+taskList?.addEventListener("input", (event) => {
+  const field = event.target.closest("[contenteditable='true'][data-field]");
+  if (field) field.dataset.dirty = "true";
+});
+
 taskList?.addEventListener(
   "blur",
   async (event) => {
     const field = event.target.closest("[contenteditable='true'][data-field]");
-    if (!field) return;
+    if (!field || !field.dataset.dirty) return;
 
     const row = field.closest("[data-task-id]");
     if (!row) return;
