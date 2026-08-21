@@ -76,13 +76,13 @@ function escapeHtml(value = "") {
 }
 
 function formatDate(value) {
-  if (!value) return "No deadline";
+  if (!value) return t("No deadline");
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
   return date
-    .toLocaleString(undefined, {
+    .toLocaleString(getCurrentLang() === "bn" ? "bn-BD" : undefined, {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -95,6 +95,41 @@ function formatDate(value) {
 
 function getUserById(userId) {
   return state.users.find((user) => user.id === userId) || null;
+}
+
+// Fetches a Bangla translation for `text` and swaps it into `el` once ready.
+async function translateElementText(el, text) {
+  if (!el) return;
+  const translated = await translateDynamicText(text);
+  if (getCurrentLang() === "bn" && el.dataset.original === text) {
+    el.textContent = translated;
+  }
+}
+
+// Same as translateElementText but for form field values (e.g. the comment textarea).
+async function translateFieldValue(el, text) {
+  if (!el || !text) return;
+  const translated = await translateDynamicText(text);
+  if (
+    getCurrentLang() === "bn" &&
+    el.dataset.original === text &&
+    el.value === text
+  ) {
+    el.value = translated;
+    if (el === taskDetailsComment) {
+      taskDetailsCommentCount.textContent = `${taskDetailsComment.value.length}/200`;
+    }
+  }
+}
+
+// Translates every visible task description in the table when Bangla is active.
+function applyDynamicDescriptionTranslations() {
+  if (getCurrentLang() !== "bn") return;
+  taskList
+    ?.querySelectorAll(".task-name[data-field='description']")
+    .forEach((el) => {
+      translateElementText(el, el.dataset.original);
+    });
 }
 
 function showConnectionBanner(message, isWarning) {
@@ -113,7 +148,7 @@ function hideConnectionBanner() {
 
 window.addEventListener("online", hideConnectionBanner);
 window.addEventListener("offline", () =>
-  showConnectionBanner("No internet connection", false),
+  showConnectionBanner(t("No internet connection"), false),
 );
 
 function renderTaskSummary() {
@@ -146,8 +181,8 @@ function renderTaskSummary() {
     (task) => task.priority === "urgent",
   ).length;
   taskSummary.innerHTML = `
-    <span><strong>${total}</strong> task${total === 1 ? "" : "s"}</span>
-    <span class="urgent-summary"><strong>${urgent}</strong> urgent${urgent === 1 ? "" : "s"}</span>
+    <span><strong>${total}</strong> ${t(total === 1 ? "task" : "tasks")}</span>
+    <span class="urgent-summary"><strong>${urgent}</strong> ${t(urgent === 1 ? "urgent" : "urgents")}</span>
   `;
 }
 
@@ -224,7 +259,7 @@ function renderTasks() {
               (isManager || isCreator) && !readOnlyTask && !isAssignedTasksView;
             const createdByLabel =
               creatorId && creatorId !== String(state.currentUser?.id || "")
-                ? `<div class="task-created-by">Entry by: ${escapeHtml(creator?.name || creatorId)}</div>`
+                ? `<div class="task-created-by">${t("Entry by")}: ${escapeHtml(creator?.name || creatorId)}</div>`
                 : "";
 
             return `
@@ -237,8 +272,9 @@ function renderTasks() {
                 <td>
                   <div
                     class="table-editable task-name"
-                    contenteditable="${canEditTask}"
+                    contenteditable="${canEditTask && getCurrentLang() === "en"}"
                     data-field="description"
+                    data-original="${escapeHtml(task.description)}"
                   >
                     ${escapeHtml(task.description)}
                   </div>
@@ -254,7 +290,7 @@ function renderTasks() {
                       class="assigned-select table-select"
                       data-task-id="${task.id}"
                       ${canEditTask ? "" : "disabled"}
-                      aria-label="Assign task"
+                      aria-label="${t("Assign task")}"
                     >
                       ${peopleOptions(assignedId)}
                     </select>
@@ -273,14 +309,14 @@ function renderTasks() {
                       class="priority-button ${task.priority}"
                       data-task-id="${task.id}"
                       ${canEditTask ? "" : "disabled"}
-                      aria-label="Change task priority"
-                      title="Change priority"
+                      aria-label="${t("Change priority")}"
+                      title="${t("Change priority")}"
                     >
                       <span class="material-symbols-outlined">${task.priority === "urgent" ? "flag" : "outlined_flag"}</span>
                     </button>
-                    <select class="priority-select" data-task-id="${task.id}" ${canEditTask ? "" : "disabled"} aria-label="Task priority">
-                      <option value="normal" ${task.priority === "normal" ? "selected" : ""}>Normal</option>
-                      <option value="urgent" ${task.priority === "urgent" ? "selected" : ""}>Urgent</option>
+                    <select class="priority-select" data-task-id="${task.id}" ${canEditTask ? "" : "disabled"} aria-label="${t("Task priority")}">
+                      <option value="normal" ${task.priority === "normal" ? "selected" : ""}>${t("Normal")}</option>
+                      <option value="urgent" ${task.priority === "urgent" ? "selected" : ""}>${t("Urgent")}</option>
                     </select>
                     `
                     }
@@ -289,7 +325,7 @@ function renderTasks() {
                         ? ""
                         : `
                           <span class="deadline-picker">
-                            <button type="button" class="deadline-button" ${canEditTask ? "" : "disabled"} aria-label="Choose task deadline" title="Choose deadline">
+                            <button type="button" class="deadline-button" ${canEditTask ? "" : "disabled"} aria-label="${t("Choose deadline")}" title="${t("Choose deadline")}">
                               <span class="material-symbols-outlined">calendar_month</span>
                             </button>
                             <input class="deadline-input" type="date" data-task-id="${task.id}" value="${escapeHtml(task.deadline ? task.deadline.slice(0, 10) : "")}" aria-label="Task deadline" ${canEditTask ? "" : "disabled"}>
@@ -301,8 +337,8 @@ function renderTasks() {
                       type="button"
                       class="details-button"
                       data-task-id="${task.id}"
-                      aria-label="Open task details"
-                      title="Task details"
+                      aria-label="${t("Open task details")}"
+                      title="${t("Task details")}"
                     >
                       <span class="material-symbols-outlined">
                         info
@@ -325,7 +361,7 @@ function renderTasks() {
               <input
                 id="inlineTask"
                 class="inline-input"
-                placeholder="Click to add task..."
+                placeholder="${t("Click to add task...")}"
                 autocomplete="off"
               >
             </td>
@@ -345,8 +381,8 @@ function renderTasks() {
                 <button
                   type="button"
                   class="priority-button normal"
-                  aria-label="Task priority"
-                  title="Normal priority"
+                  aria-label="${t("Task priority")}"
+                  title="${t("Normal priority")}"
                 >
                   <span class="material-symbols-outlined">
                     outlined_flag
@@ -354,10 +390,10 @@ function renderTasks() {
                 </button>
 
                 <select class="priority-select" disabled>
-                  <option>Normal</option>
+                  <option>${t("Normal")}</option>
                 </select>
                 <span class="deadline-picker">
-                  <button type="button" class="deadline-button" aria-label="Choose task deadline" title="Choose deadline">
+                  <button type="button" class="deadline-button" aria-label="${t("Choose deadline")}" title="${t("Choose deadline")}">
                     <span class="material-symbols-outlined">calendar_month</span>
                   </button>
                   <input id="inlineDeadline" class="deadline-input" type="date" aria-label="Task deadline">
@@ -382,6 +418,8 @@ function renderTasks() {
     </table>
   </div>
 `;
+
+  applyDynamicDescriptionTranslations();
 
   const inlineTask = document.getElementById("inlineTask");
   const inlineAssignee = document.getElementById("inlineAssignee");
@@ -436,7 +474,7 @@ function renderTasks() {
 
       const nextPriority = select.value === "urgent" ? "normal" : "urgent";
       const confirmed = window.confirm(
-        `Change task priority to ${nextPriority === "urgent" ? "Urgent" : "Normal"}?`,
+        `Change task priority to ${nextPriority === "urgent" ? t("Urgent") : t("Normal")}?`,
       );
       if (!confirmed) return;
 
@@ -487,7 +525,7 @@ function isTaskEditorActive() {
 
 async function loadTaskData(scrollToTop = false) {
   if (!navigator.onLine) {
-    showConnectionBanner("No internet connection", false);
+    showConnectionBanner(t("No internet connection"), false);
     return;
   }
 
@@ -496,7 +534,7 @@ async function loadTaskData(scrollToTop = false) {
 
   // Warn without aborting the request if the server is slow to respond.
   const slowConnectionTimer = setTimeout(() => {
-    showConnectionBanner("Slow connection… still refreshing", true);
+    showConnectionBanner(t("Slow connection… still refreshing"), true);
   }, 4000);
 
   try {
@@ -521,7 +559,7 @@ async function loadTaskData(scrollToTop = false) {
     hideConnectionBanner();
   } catch (error) {
     console.error(error);
-    showConnectionBanner("Unable to reach the server", false);
+    showConnectionBanner(t("Unable to reach the server"), false);
   } finally {
     clearTimeout(slowConnectionTimer);
     const elapsed = Date.now() - startedAt;
@@ -532,7 +570,7 @@ async function loadTaskData(scrollToTop = false) {
 
 async function sendTaskAction(payload, triggerEl) {
   if (!navigator.onLine) {
-    alert("No internet connection. Please reconnect and try again.");
+    alert(t("No internet connection. Please reconnect and try again."));
     return;
   }
 
@@ -542,7 +580,7 @@ async function sendTaskAction(payload, triggerEl) {
   }
 
   const slowConnectionTimer = setTimeout(() => {
-    showConnectionBanner("Slow connection… still working", true);
+    showConnectionBanner(t("Slow connection… still working"), true);
   }, 4000);
 
   try {
@@ -554,7 +592,7 @@ async function sendTaskAction(payload, triggerEl) {
 
     const result = await response.json();
     if (!result.success) {
-      alert(result.error || "Action failed");
+      alert(result.error || t("Action failed"));
       return;
     }
 
@@ -563,7 +601,7 @@ async function sendTaskAction(payload, triggerEl) {
     hideConnectionBanner();
   } catch (error) {
     console.error(error);
-    alert("Unable to reach the server. Please check your connection.");
+    alert(t("Unable to reach the server. Please check your connection."));
   } finally {
     clearTimeout(slowConnectionTimer);
     if (triggerEl) {
@@ -587,7 +625,7 @@ function populateAssignToOptions() {
   );
 
   taskAssignTo.innerHTML =
-    '<option style="font-size: 13px;" value="">Select person</option>' +
+    `<option style="font-size: 13px;" value="">${t("Select person")}</option>` +
     sortedUsers
       .map(
         (u) =>
@@ -606,11 +644,14 @@ function formatDateOnly(value, fallback) {
   if (!value) return fallback;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  return date.toLocaleDateString(
+    getCurrentLang() === "bn" ? "bn-BD" : undefined,
+    {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    },
+  );
 }
 
 function closeTaskDetails() {
@@ -631,18 +672,21 @@ function openTaskDetails(task) {
 
   detailTaskId = task.id;
 
-  document.getElementById("taskDetailsTitle").textContent = task.description;
+  const taskDetailsTitleEl = document.getElementById("taskDetailsTitle");
+  taskDetailsTitleEl.textContent = task.description;
+  taskDetailsTitleEl.dataset.original = task.description;
+  translateElementText(taskDetailsTitleEl, task.description);
 
   const assignedToElement = document.getElementById("taskDetailsAssignedTo");
   if (assignedToElement) {
     assignedToElement.textContent =
-      getUserById(task.assigned_to?.[0])?.name || "Unassigned";
+      getUserById(task.assigned_to?.[0])?.name || t("Unassigned");
   }
 
   const priorityElement = document.getElementById("taskDetailsPriority");
 
   priorityElement.textContent =
-    task.priority === "urgent" ? "Urgent" : "Normal";
+    task.priority === "urgent" ? t("Urgent") : t("Normal");
 
   priorityElement.classList.toggle("urgent", task.priority === "urgent");
 
@@ -651,12 +695,15 @@ function openTaskDetails(task) {
   const createdByElement = document.getElementById("taskDetailsCreatedBy");
   if (createdByElement) {
     createdByElement.textContent =
-      getUserById(task.created_by)?.name || "Unknown";
+      getUserById(task.created_by)?.name || t("Unknown");
   }
 
   const createdOnElement = document.getElementById("taskDetailsCreatedOn");
   if (createdOnElement) {
-    createdOnElement.textContent = formatDateOnly(task.created_at, "Unknown");
+    createdOnElement.textContent = formatDateOnly(
+      task.created_at,
+      t("Unknown"),
+    );
   }
 
   const completedOnLabel = document.getElementById(
@@ -668,12 +715,12 @@ function openTaskDetails(task) {
     completedOnLabel.classList.toggle("hidden", !hasCompletedAt);
     completedOnElement.classList.toggle("hidden", !hasCompletedAt);
     completedOnElement.textContent = hasCompletedAt
-      ? formatDateOnly(task.completed_at, "Unknown")
+      ? formatDateOnly(task.completed_at, t("Unknown"))
       : "";
   }
 
   const deadlineElement = document.getElementById("taskDetailsDeadline");
-  deadlineElement.textContent = formatDateOnly(task.deadline, "No deadline");
+  deadlineElement.textContent = formatDateOnly(task.deadline, t("No deadline"));
   deadlineElement.classList.toggle("has-deadline", Boolean(task.deadline));
   const isReadOnlyTask = Boolean(task.completed);
   detailRemoveDeadlineBtn.disabled =
@@ -689,20 +736,22 @@ function openTaskDetails(task) {
   if (completeIcon)
     completeIcon.textContent = isReadOnlyTask ? "undo" : "check";
   detailCompleteBtn.title = isReadOnlyTask
-    ? "Revert to active"
-    : "Mark as done";
+    ? t("Revert to active")
+    : t("Mark as done");
   detailCompleteBtn.setAttribute(
     "aria-label",
-    isReadOnlyTask ? "Revert task to active" : "Mark task as done",
+    isReadOnlyTask ? t("Revert to active") : t("Mark as done"),
   );
   detailDeleteBtn.classList.toggle("hidden", isReadOnlyTask || !canDeleteTask);
 
   taskDetailsComment.value = task.comment || "";
+  taskDetailsComment.dataset.original = task.comment || "";
   taskDetailsComment.readOnly = isReadOnlyTask;
   taskDetailsComment.disabled = isReadOnlyTask;
   taskDetailsCommentCount.textContent = `${taskDetailsComment.value.length}/200`;
   taskDetailsCommentStatus.textContent = "";
   taskDetailsCommentStatus.className = "";
+  translateFieldValue(taskDetailsComment, task.comment || "");
   taskPhotoStatus.textContent = "";
   taskDetailsPhoto.classList.toggle("hidden", !task.photo_url);
   taskDetailsPhotoPreview.src = task.photo_url || "";
@@ -819,14 +868,14 @@ async function uploadTaskPhoto(file) {
   const task = state.tasks.find((item) => item.id === detailTaskId);
   const storage = getFirebaseStorage();
   if (!task || !storage) {
-    taskPhotoStatus.textContent = "Add Firebase config first";
+    taskPhotoStatus.textContent = t("Add Firebase config first");
     return;
   }
 
-  taskPhotoStatus.textContent = "Compressing...";
+  taskPhotoStatus.textContent = t("Compressing...");
   try {
     const optimizedFile = await compressImageToTarget(file, 150 * 1024);
-    taskPhotoStatus.textContent = "Uploading...";
+    taskPhotoStatus.textContent = t("Uploading...");
 
     if (task.photo_path)
       await storage
@@ -839,10 +888,10 @@ async function uploadTaskPhoto(file) {
     const photoUrl = await snapshot.ref.getDownloadURL();
     await persistTaskPhoto(photoUrl, photoPath);
     openTaskDetails(state.tasks.find((item) => item.id === detailTaskId));
-    taskPhotoStatus.textContent = "Saved ✓";
+    taskPhotoStatus.textContent = t("Saved ✓");
   } catch (error) {
     console.error(error);
-    taskPhotoStatus.textContent = "Could not upload photo";
+    taskPhotoStatus.textContent = t("Could not upload photo");
   } finally {
     taskPhotoInput.value = "";
   }
@@ -850,9 +899,10 @@ async function uploadTaskPhoto(file) {
 
 async function removeTaskPhoto() {
   const task = state.tasks.find((item) => item.id === detailTaskId);
-  if (!task || !task.photo_url || !window.confirm("Remove this photo?")) return;
+  if (!task || !task.photo_url || !window.confirm(t("Remove this photo?")))
+    return;
   const storage = getFirebaseStorage();
-  taskPhotoStatus.textContent = "Removing...";
+  taskPhotoStatus.textContent = t("Removing...");
   try {
     if (storage && task.photo_path)
       await storage
@@ -861,17 +911,17 @@ async function removeTaskPhoto() {
         .catch(() => {});
     await persistTaskPhoto("", "");
     openTaskDetails(state.tasks.find((item) => item.id === detailTaskId));
-    taskPhotoStatus.textContent = "Removed ✓";
+    taskPhotoStatus.textContent = t("Removed ✓");
   } catch (error) {
     console.error(error);
-    taskPhotoStatus.textContent = "Could not remove photo";
+    taskPhotoStatus.textContent = t("Could not remove photo");
   }
 }
 
 function scheduleCommentSave() {
   clearTimeout(detailCommentSaveTimer);
   taskDetailsCommentCount.textContent = `${taskDetailsComment.value.length}/200`;
-  taskDetailsCommentStatus.textContent = "Saving...";
+  taskDetailsCommentStatus.textContent = t("Saving...");
   taskDetailsCommentStatus.className = "saving";
   detailCommentSaveTimer = setTimeout(saveDetailComment, 500);
 }
@@ -894,11 +944,11 @@ async function saveDetailComment() {
     if (!result.success) throw new Error(result.error || "Comment save failed");
 
     state.tasks = result.tasks || state.tasks;
-    taskDetailsCommentStatus.textContent = "Saved ✓";
+    taskDetailsCommentStatus.textContent = t("Saved ✓");
     taskDetailsCommentStatus.className = "saved";
   } catch (error) {
     console.error(error);
-    taskDetailsCommentStatus.textContent = "Could not save";
+    taskDetailsCommentStatus.textContent = t("Could not save");
     taskDetailsCommentStatus.className = "error";
   }
 }
@@ -909,10 +959,12 @@ async function handleTaskDetailsAction(action) {
 
   const message =
     action === "delete"
-      ? "Delete this task? This action cannot be undone."
+      ? t("Delete this task? This action cannot be undone.")
       : task.completed
-        ? "Move this task back to active tasks?"
-        : "Mark this task as completed? It will be removed from the task list.";
+        ? t("Move this task back to active tasks?")
+        : t(
+            "Mark this task as completed? It will be removed from the task list.",
+          );
   if (!window.confirm(message)) return;
 
   if (action === "delete") {
@@ -951,7 +1003,7 @@ detailCompleteBtn?.addEventListener("click", () =>
 detailRemoveDeadlineBtn?.addEventListener("click", async () => {
   const task = state.tasks.find((item) => item.id === detailTaskId);
   if (!task || !task.deadline) return;
-  if (!window.confirm("Remove this task's deadline?")) return;
+  if (!window.confirm(t("Remove this task's deadline?"))) return;
 
   await sendTaskAction(
     { action: "update_deadline", task_id: task.id, deadline: "" },
@@ -1020,7 +1072,7 @@ taskForm?.addEventListener("submit", async (event) => {
   const assignedTo = taskAssignTo?.value || "";
 
   if (!description) {
-    alert("Please provide a description.");
+    alert(t("Please provide a description."));
     return;
   }
 
@@ -1055,7 +1107,7 @@ taskList?.addEventListener("click", async (event) => {
     if (!task || task.completed) return;
 
     const confirmed = window.confirm(
-      "Mark this task as completed? It will be removed from the task list.",
+      t("Mark this task as completed? It will be removed from the task list."),
     );
     if (!confirmed) return;
 
@@ -1171,6 +1223,88 @@ taskDetailsModal?.addEventListener("click", (event) => {
 refreshBtn?.addEventListener("click", () => {
   loadTaskData(true);
 });
+
+// Updates all static (non task-derived) labels/placeholders for the active language.
+function applyStaticUI() {
+  const lang = getCurrentLang();
+
+  document
+    .querySelectorAll("#personalTaskFilterSelector option")
+    .forEach((opt) => {
+      if (opt.value === "assigned") opt.textContent = t("Assigned to me");
+      if (opt.value === "created") opt.textContent = t("Task created by me");
+    });
+  document.querySelectorAll("#taskViewSelector option").forEach((opt) => {
+    if (opt.value === "active") opt.textContent = t("Active Tasks");
+    if (opt.value === "completed") opt.textContent = t("Completed Tasks");
+  });
+  const allPeopleOption = document.querySelector(
+    '#assigneeFilterSelector option[value=""]',
+  );
+  if (allPeopleOption) allPeopleOption.textContent = t("All People");
+
+  const commentLabel = document.getElementById("taskCommentLabel");
+  if (commentLabel) commentLabel.textContent = t("Comment");
+
+  if (cancelTaskBtn) cancelTaskBtn.textContent = t("Cancel");
+  const saveTaskBtn = document.getElementById("saveTaskBtn");
+  if (saveTaskBtn) saveTaskBtn.textContent = t("Save");
+
+  document.querySelectorAll("#taskPriority option").forEach((opt) => {
+    if (opt.value === "normal") opt.textContent = t("Normal");
+    if (opt.value === "urgent") opt.textContent = t("Urgent");
+  });
+
+  const deadlineLabel = document.getElementById("taskDeadlineLabel");
+  if (deadlineLabel) deadlineLabel.textContent = t("Deadline date & time");
+
+  const urgencyLabel = document.getElementById("taskDetailsUrgencyLabel");
+  if (urgencyLabel) urgencyLabel.textContent = t("Urgency");
+  const deadlineDt = document.getElementById("taskDetailsDeadlineLabel");
+  if (deadlineDt) deadlineDt.textContent = t("Deadline");
+  const commentDt = document.getElementById("taskDetailsCommentLabel");
+  if (commentDt) commentDt.textContent = t("Comment");
+  const photoDt = document.getElementById("taskDetailsPhotoLabel");
+  if (photoDt) photoDt.textContent = t("Photo");
+
+  if (taskDetailsComment)
+    taskDetailsComment.placeholder = t("Add a comment...");
+
+  const photoAddLabel = document.querySelector('label[for="taskPhotoInput"]');
+  if (photoAddLabel) {
+    photoAddLabel.title = t("Add photo");
+    photoAddLabel.setAttribute("aria-label", t("Add photo"));
+  }
+  if (taskPhotoRemoveBtn) {
+    taskPhotoRemoveBtn.title = t("Remove photo");
+    taskPhotoRemoveBtn.setAttribute("aria-label", t("Remove photo"));
+  }
+  if (detailRemoveDeadlineBtn) {
+    detailRemoveDeadlineBtn.title = t("Remove deadline");
+    detailRemoveDeadlineBtn.setAttribute("aria-label", t("Remove deadline"));
+  }
+  if (detailDeleteBtn) {
+    detailDeleteBtn.title = t("Delete task");
+    detailDeleteBtn.setAttribute("aria-label", t("Delete task"));
+  }
+  if (refreshBtn) refreshBtn.title = t("Refresh");
+  const logoutBtn = document.querySelector('.logout-btn[href$="logout.php"]');
+  if (logoutBtn) logoutBtn.title = t("Logout");
+
+  const langToggleBtn = document.getElementById("langToggleBtn");
+  if (langToggleBtn) {
+    langToggleBtn.title = lang === "bn" ? "Switch to English" : "বাংলায় পড়ুন";
+  }
+
+  renderTasks();
+}
+
+document.getElementById("langToggleBtn")?.addEventListener("click", () => {
+  setCurrentLang(getCurrentLang() === "bn" ? "en" : "bn");
+  applyStaticUI();
+});
+
+applyStaticUI();
 
 window.addEventListener("load", () => {
   loadTaskData();

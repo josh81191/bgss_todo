@@ -52,10 +52,18 @@
         <span id="refreshingIndicator" class="refresh-spinner hidden" title="Refreshing..."></span>
       </div>
 
-      <!-- let logout be a materials icons -->
-      <a href="php/api/logout.php" class="logout-btn" title="Logout">
-        <span class="material-symbols-outlined">logout</span>
-      </a>
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <?php if ($user['role'] !== 'manager'): ?>
+        <a href="javascript:void(0)" id="langToggleBtn" class="logout-btn" title="Switch language">
+          <span class="material-symbols-outlined">language</span>
+        </a>
+        <?php endif; ?>
+
+        <!-- let logout be a materials icons -->
+        <a href="php/api/logout.php" class="logout-btn" title="Logout">
+          <span class="material-symbols-outlined">logout</span>
+        </a>
+      </div>
     </header>
 
     <div class="topbar-spacer"></div>
@@ -116,7 +124,7 @@
           </label>
 
           <label class="field full">
-            <span>Comment</span>
+            <span id="taskCommentLabel">Comment</span>
             <textarea id="taskComment" name="comment" rows="3"></textarea>
           </label>
 
@@ -134,7 +142,7 @@
           </label>
 
           <label class="field">
-            <span>Deadline date & time</span>
+            <span id="taskDeadlineLabel">Deadline date & time</span>
             <input type="date" id="taskDeadlineDate" name="deadline_date" style="width: 70%;" />
           </label>
 
@@ -146,7 +154,7 @@
 
         <div class="modal-actions">
           <button type="button" class="secondary-btn" id="cancelTaskBtn">Cancel</button>
-          <button type="submit" class="primary-btn">Save</button>
+          <button type="submit" class="primary-btn" id="saveTaskBtn">Save</button>
         </div>
       </form>
     </div>
@@ -164,7 +172,7 @@
         <dt>Assigned to</dt>
         <dd id="taskDetailsAssignedTo"></dd>
         <?php endif; ?>
-        <dt>Urgency</dt>
+        <dt id="taskDetailsUrgencyLabel">Urgency</dt>
         <dd id="taskDetailsPriority"></dd>
         <?php if ($user['role'] === 'manager'): ?>
         <dt>Created by</dt>
@@ -174,9 +182,9 @@
         <dt id="taskDetailsCompletedOnLabel" class="hidden">Completed on</dt>
         <dd id="taskDetailsCompletedOn" class="hidden"></dd>
         <?php endif; ?>
-        <dt>Deadline</dt>
+        <dt id="taskDetailsDeadlineLabel">Deadline</dt>
         <dd id="taskDetailsDeadline"></dd>
-        <dt>Comment</dt>
+        <dt id="taskDetailsCommentLabel">Comment</dt>
         <dd>
           <textarea id="taskDetailsComment" class="task-details-comment-input" rows="4" maxlength="200"
             placeholder="Add a comment..."></textarea>
@@ -185,7 +193,7 @@
             <span id="taskDetailsCommentCount">0/200</span>
           </div>
         </dd>
-        <dt>Photo</dt>
+        <dt id="taskDetailsPhotoLabel">Photo</dt>
         <dd>
           <div id="taskDetailsPhoto" class="task-details-photo hidden">
             <img id="taskDetailsPhotoPreview" alt="Task attachment">
@@ -223,6 +231,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
   <script src="js/firebase-config.js?v=<?php echo time(); ?>"></script>
+  <script src="js/i18n.js?v=<?php echo time(); ?>"></script>
   <script src="js/app.js?v=<?php echo time(); ?>"></script>
 </body>
 
